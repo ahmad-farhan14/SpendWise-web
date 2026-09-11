@@ -156,10 +156,6 @@ export default function SignupPage() {
       });
       if (error) throw error;
 
-      // Supabase's anti-enumeration behavior: signing up with an email
-      // that's already registered returns success with NO error, but
-      // an empty identities array and no session. Detect that here
-      // instead of silently redirecting with no session.
       const emailAlreadyRegistered =
         data.user && data.user.identities?.length === 0;
 
@@ -175,27 +171,27 @@ export default function SignupPage() {
         try {
           await ensureDefaultCategories(data.user.id);
         } catch {
-          // Categories might already be created by trigger or on first login
+          // Ignore error
         }
-      }
 
-      if (data.session) {
+        if (!data.session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword(
+            {
+              email,
+              password,
+            },
+          );
+          if (signInError) throw signInError;
+        }
+
         toast.success("Account created! Redirecting to dashboard...");
-        // Full page reload ensures the fresh session cookie is picked up
-        // by the middleware on the very next request.
         window.location.href = "/dashboard";
         return;
-      } else {
-        // No session and not a duplicate — likely email confirmation is required
-        setError(
-          "Please check your email to confirm your account before signing in.",
-        );
-        setLoading(false);
       }
     } catch (err: unknown) {
       if (isLeakedPasswordError(err)) {
         setError(
-          "This password is too common or has appeared in a data breach. Try a less predictable combination (avoid your name + simple numbers).",
+          "This password is too common or has appeared in a data breach. Try a less predictable combination.",
         );
       } else {
         setError(mapAuthError(err));
@@ -286,7 +282,6 @@ export default function SignupPage() {
                 aria-invalid={!!fieldErrors.password}
               />
 
-              {/* Strength meter */}
               {password && (
                 <div className="space-y-1.5 pt-1">
                   <div className="flex gap-1">
@@ -319,7 +314,6 @@ export default function SignupPage() {
                 </div>
               )}
 
-              {/* Requirement checklist */}
               <ul className="space-y-1 pt-1">
                 {requirements.map((req) => (
                   <li
