@@ -37,18 +37,6 @@ import {
 import { ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-// Kategori default jika akun user baru belum memiliki kategori
-const DEFAULT_CATEGORIES = [
-  { name: "Food & Beverage", type: "expense", icon: "Utensils" },
-  { name: "Transportation", type: "expense", icon: "Car" },
-  { name: "Shopping", type: "expense", icon: "ShoppingBag" },
-  { name: "Bills & Utilities", type: "expense", icon: "Receipt" },
-  { name: "Entertainment", type: "expense", icon: "Film" },
-  { name: "Salary", type: "income", icon: "Wallet" },
-  { name: "Freelance", type: "income", icon: "Briefcase" },
-  { name: "Investment", type: "income", icon: "TrendingUp" },
-];
-
 const transactionSchema = z.object({
   type: z.enum(["income", "expense"]),
   amount: z.string().min(1, "Amount is required"),
@@ -113,23 +101,6 @@ export function TransactionModal({
     if (error) {
       toast.error("Failed to load categories");
       return;
-    }
-
-    // Auto-seed kategori jika belum ada data sama sekali di database user
-    if (!data || data.length === 0) {
-      const toInsert = DEFAULT_CATEGORIES.map((c) => ({
-        ...c,
-        user_id: profile.id,
-      }));
-      const { data: newCats, error: insertErr } = await supabase
-        .from("categories")
-        .insert(toInsert)
-        .select();
-
-      if (!insertErr && newCats) {
-        setCategories(newCats as Category[]);
-        return;
-      }
     }
 
     setCategories((data ?? []) as Category[]);
