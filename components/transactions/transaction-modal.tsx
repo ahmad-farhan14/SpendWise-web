@@ -1,47 +1,63 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { createClient } from '@/lib/supabase/client';
-import { useCurrency } from '@/lib/currency-context';
-import { useAuth } from '@/lib/auth-context';
-import type { Category, Transaction, CurrencyCode, TransactionType } from '@/lib/types';
-import { CURRENCIES, CURRENCY_LABELS } from '@/lib/types';
-import { getCategoryIcon } from '@/lib/utils/icon-map';
-import { formatThousands } from '@/lib/utils/currency';
+import { useState, useEffect, useCallback } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/client";
+import { useCurrency } from "@/lib/currency-context";
+import { useAuth } from "@/lib/auth-context";
+import type {
+  Category,
+  Transaction,
+  CurrencyCode,
+  TransactionType,
+} from "@/lib/types";
+import { CURRENCIES, CURRENCY_LABELS } from "@/lib/types";
+import { getCategoryIcon } from "@/lib/utils/icon-map";
+import { formatThousands } from "@/lib/utils/currency";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ArrowDownCircle, ArrowUpCircle, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/select";
+import { ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
+// Kategori default jika akun user baru belum memiliki kategori
+const DEFAULT_CATEGORIES = [
+  { name: "Food & Beverage", type: "expense", icon: "Utensils" },
+  { name: "Transportation", type: "expense", icon: "Car" },
+  { name: "Shopping", type: "expense", icon: "ShoppingBag" },
+  { name: "Bills & Utilities", type: "expense", icon: "Receipt" },
+  { name: "Entertainment", type: "expense", icon: "Film" },
+  { name: "Salary", type: "income", icon: "Wallet" },
+  { name: "Freelance", type: "income", icon: "Briefcase" },
+  { name: "Investment", type: "income", icon: "TrendingUp" },
+];
 
 const transactionSchema = z.object({
-  type: z.enum(['income', 'expense']),
-  amount: z.string().min(1, 'Amount is required'),
-  currency: z.enum(['IDR', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'KRW']),
-  categoryId: z.string().min(1, 'Please select a category'),
+  type: z.enum(["income", "expense"]),
+  amount: z.string().min(1, "Amount is required"),
+  currency: z.enum(["IDR", "USD", "JPY", "EUR", "GBP", "CNY", "KRW"]),
+  categoryId: z.string().min(1, "Please select a category"),
   note: z.string().max(200).optional(),
-  transactionDate: z.string().refine(
-    (d) => new Date(d) <= new Date(),
-    'Date cannot be in the future'
-  ),
+  transactionDate: z
+    .string()
+    .refine((d) => new Date(d) <= new Date(), "Date cannot be in the future"),
 });
 
 type FormData = z.infer<typeof transactionSchema>;
@@ -75,29 +91,47 @@ export function TransactionModal({
   } = useForm<FormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      type: 'expense',
-      amount: '',
+      type: "expense",
+      amount: "",
       currency: baseCurrency,
-      categoryId: '',
-      note: '',
-      transactionDate: new Date().toISOString().split('T')[0],
+      categoryId: "",
+      note: "",
+      transactionDate: new Date().toISOString().split("T")[0],
     },
   });
 
-  const watchedType = watch('type');
-  const watchedCurrency = watch('currency');
+  const watchedType = watch("type");
 
   const loadCategories = useCallback(async () => {
     if (!profile) return;
     const supabase = createClient();
     const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('user_id', profile.id);
+      .from("categories")
+      .select("*")
+      .eq("user_id", profile.id);
+
     if (error) {
-      toast.error('Failed to load categories');
+      toast.error("Failed to load categories");
       return;
     }
+
+    // Auto-seed kategori jika belum ada data sama sekali di database user
+    if (!data || data.length === 0) {
+      const toInsert = DEFAULT_CATEGORIES.map((c) => ({
+        ...c,
+        user_id: profile.id,
+      }));
+      const { data: newCats, error: insertErr } = await supabase
+        .from("categories")
+        .insert(toInsert)
+        .select();
+
+      if (!insertErr && newCats) {
+        setCategories(newCats as Category[]);
+        return;
+      }
+    }
+
     setCategories((data ?? []) as Category[]);
   }, [profile]);
 
@@ -114,17 +148,17 @@ export function TransactionModal({
         amount: formatThousands(String(editingTransaction.amount)),
         currency: editingTransaction.currency,
         categoryId: editingTransaction.category_id,
-        note: editingTransaction.note ?? '',
+        note: editingTransaction.note ?? "",
         transactionDate: editingTransaction.transaction_date,
       });
     } else {
       reset({
-        type: 'expense',
-        amount: '',
+        type: "expense",
+        amount: "",
         currency: baseCurrency,
-        categoryId: '',
-        note: '',
-        transactionDate: new Date().toISOString().split('T')[0],
+        categoryId: "",
+        note: "",
+        transactionDate: new Date().toISOString().split("T")[0],
       });
     }
   }, [editingTransaction, reset, baseCurrency, open]);
@@ -133,9 +167,9 @@ export function TransactionModal({
 
   const onSubmit = async (data: FormData) => {
     if (!profile) return;
-    const amount = parseFloat(data.amount.replace(/\./g, '')) || 0;
+    const amount = parseFloat(data.amount.replace(/\./g, "")) || 0;
     if (amount <= 0) {
-      toast.error('Amount must be greater than 0');
+      toast.error("Amount must be greater than 0");
       return;
     }
 
@@ -143,6 +177,7 @@ export function TransactionModal({
     try {
       const supabase = createClient();
       const payload = {
+        user_id: profile.id,
         type: data.type,
         amount,
         currency: data.currency,
@@ -153,40 +188,41 @@ export function TransactionModal({
 
       if (editingTransaction) {
         const { error } = await supabase
-          .from('transactions')
+          .from("transactions")
           .update(payload)
-          .eq('id', editingTransaction.id);
+          .eq("id", editingTransaction.id);
         if (error) throw error;
-        toast.success('Transaction updated');
+        toast.success("Transaction updated");
       } else {
-        const { error } = await supabase.from('transactions').insert(payload);
+        const { error } = await supabase.from("transactions").insert(payload);
         if (error) throw error;
-        toast.success('Transaction added');
+        toast.success("Transaction added");
       }
 
       onSaved?.();
       onOpenChange(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save transaction';
+      const message =
+        err instanceof Error ? err.message : "Failed to save transaction";
       toast.error(message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
+            {editingTransaction ? "Edit Transaction" : "Add Transaction"}
           </DialogTitle>
           <DialogDescription>
             {editingTransaction
-              ? 'Update the details of your transaction.'
-              : 'Log a new income or expense transaction.'}
+              ? "Update the details of your transaction."
+              : "Log a new income or expense transaction."}
           </DialogDescription>
         </DialogHeader>
 
@@ -195,11 +231,14 @@ export function TransactionModal({
           <div className="flex items-center justify-center gap-4">
             <button
               type="button"
-              onClick={() => setValue('type', 'expense')}
+              onClick={() => {
+                setValue("type", "expense");
+                setValue("categoryId", "");
+              }}
               className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
-                watchedType === 'expense'
-                  ? 'bg-destructive/10 text-destructive ring-2 ring-destructive/30'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                watchedType === "expense"
+                  ? "bg-destructive/10 text-destructive ring-2 ring-destructive/30"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               <ArrowDownCircle className="h-4 w-4" />
@@ -207,11 +246,14 @@ export function TransactionModal({
             </button>
             <button
               type="button"
-              onClick={() => setValue('type', 'income')}
+              onClick={() => {
+                setValue("type", "income");
+                setValue("categoryId", "");
+              }}
               className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
-                watchedType === 'income'
-                  ? 'bg-brand/10 text-brand ring-2 ring-brand/30'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                watchedType === "income"
+                  ? "bg-brand/10 text-brand ring-2 ring-brand/30"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               <ArrowUpCircle className="h-4 w-4" />
@@ -226,8 +268,8 @@ export function TransactionModal({
               control={control}
               name="amount"
               render={({ field }) => {
-                const raw = (field.value as string) ?? '';
-                const digits = raw.replace(/\D/g, '');
+                const raw = (field.value as string) ?? "";
+                const digits = raw.replace(/\D/g, "");
                 const displayValue = formatThousands(digits);
                 return (
                   <Input
@@ -238,7 +280,7 @@ export function TransactionModal({
                     placeholder="0"
                     className="text-lg font-semibold tabular-nums"
                     onChange={(e) => {
-                      const digitsOnly = e.target.value.replace(/\D/g, '');
+                      const digitsOnly = e.target.value.replace(/\D/g, "");
                       field.onChange(formatThousands(digitsOnly));
                     }}
                   />
@@ -246,7 +288,9 @@ export function TransactionModal({
               }}
             />
             {errors.amount && (
-              <p className="text-sm text-destructive">{errors.amount.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.amount.message}
+              </p>
             )}
           </div>
 
@@ -301,7 +345,9 @@ export function TransactionModal({
               )}
             />
             {errors.categoryId && (
-              <p className="text-sm text-destructive">{errors.categoryId.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.categoryId.message}
+              </p>
             )}
           </div>
 
@@ -309,7 +355,7 @@ export function TransactionModal({
           <div className="space-y-2">
             <Label htmlFor="note">Note (optional)</Label>
             <Textarea
-              {...register('note')}
+              {...register("note")}
               id="note"
               placeholder="Add a note..."
               maxLength={200}
@@ -324,13 +370,15 @@ export function TransactionModal({
           <div className="space-y-2">
             <Label htmlFor="transactionDate">Date</Label>
             <Input
-              {...register('transactionDate')}
+              {...register("transactionDate")}
               id="transactionDate"
               type="date"
               max={today}
             />
             {errors.transactionDate && (
-              <p className="text-sm text-destructive">{errors.transactionDate.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.transactionDate.message}
+              </p>
             )}
           </div>
 
@@ -356,9 +404,9 @@ export function TransactionModal({
                   Saving...
                 </>
               ) : editingTransaction ? (
-                'Save Changes'
+                "Save Changes"
               ) : (
-                'Save Transaction'
+                "Save Transaction"
               )}
             </Button>
           </div>
