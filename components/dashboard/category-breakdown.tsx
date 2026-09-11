@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { getCategoryIcon } from '@/lib/utils/icon-map';
-import { formatCurrency } from '@/lib/utils/currency';
-import type { Transaction, Category, CurrencyCode } from '@/lib/types';
-import { PieChart } from 'lucide-react';
+import { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { getCategoryIcon } from "@/lib/utils/icon-map";
+import { formatCurrency } from "@/lib/utils/currency";
+import type { Transaction, Category, CurrencyCode } from "@/lib/types";
+import { PieChart } from "lucide-react";
 
 interface CategoryBreakdownProps {
   transactions: Transaction[];
@@ -20,7 +20,11 @@ interface BreakdownItem {
   percentage: number;
 }
 
-export function CategoryBreakdown({ transactions, categories, currency }: CategoryBreakdownProps) {
+export function CategoryBreakdown({
+  transactions,
+  categories,
+  currency,
+}: CategoryBreakdownProps) {
   const breakdown = useMemo<BreakdownItem[]>(() => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -28,18 +32,22 @@ export function CategoryBreakdown({ transactions, categories, currency }: Catego
     const monthExpenses = transactions.filter((t) => {
       const tDate = new Date(t.transaction_date);
       return (
-        t.type === 'expense' &&
-        t.currency === currency &&
-        tDate >= monthStart
+        t.type === "expense" && t.currency === currency && tDate >= monthStart
       );
     });
 
-    const totalExpense = monthExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+    const totalExpense = monthExpenses.reduce(
+      (sum, t) => sum + Number(t.amount),
+      0,
+    );
     if (totalExpense === 0) return [];
 
     const byCategory = new Map<string, number>();
     for (const t of monthExpenses) {
-      byCategory.set(t.category_id, (byCategory.get(t.category_id) ?? 0) + Number(t.amount));
+      byCategory.set(
+        t.category_id,
+        (byCategory.get(t.category_id) ?? 0) + Number(t.amount),
+      );
     }
 
     const items: BreakdownItem[] = [];
@@ -66,12 +74,15 @@ export function CategoryBreakdown({ transactions, categories, currency }: Catego
       </CardHeader>
       <CardContent>
         {breakdown.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-10 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <PieChart className="h-6 w-6 text-muted-foreground" />
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="mt-3 text-sm font-medium text-muted-foreground">
               No expenses recorded this month yet
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              Add an expense to see your category breakdown
             </p>
           </div>
         ) : (
@@ -96,10 +107,7 @@ export function CategoryBreakdown({ transactions, categories, currency }: Catego
                       </span>
                     </div>
                   </div>
-                  <Progress
-                    value={item.percentage}
-                    className="h-2"
-                  />
+                  <Progress value={item.percentage} className="h-2" />
                 </div>
               );
             })}
