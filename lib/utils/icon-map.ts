@@ -14,35 +14,47 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-const ICON_MAP: Record<string, LucideIcon> = {
-  // Mapping nama ikon lengkap
+// Map nama kategori ke ikon bawaannya
+const CATEGORY_NAME_MAP: Record<string, LucideIcon> = {
+  Transportation: Car,
+  Shopping: ShoppingBag,
+  Bills: Receipt,
+  Entertainment: Film,
+  Health: HeartPulse,
+  Other: MoreHorizontal,
+  Salary: Wallet,
+  Freelance: Briefcase,
+  Investment: TrendingUp,
+};
+
+const ICON_NAME_MAP: Record<string, LucideIcon> = {
   Utensils,
   Car,
   Receipt,
   ShoppingBag,
-  Shopping: ShoppingBag,
   Film,
-  Entertainment: Film,
   HeartPulse,
-  Health: HeartPulse,
   MoreHorizontal,
-  Other: MoreHorizontal,
   Briefcase,
-  Freelance: Briefcase,
   TrendingUp,
-  Investment: TrendingUp,
   Wallet,
-  Salary: Wallet,
   Tag,
   Fuel,
 };
 
-export function getCategoryIcon(iconName?: string): LucideIcon {
-  if (!iconName) return Tag;
+export function getCategoryIcon(
+  iconName?: string,
+  categoryName?: string,
+): LucideIcon {
+  // 1. Cek berdasarkan nama kategori bawaan terlebih dahulu
+  if (categoryName && CATEGORY_NAME_MAP[categoryName]) {
+    return CATEGORY_NAME_MAP[categoryName];
+  }
 
-  // Mencocokkan nama ikon langsung atau fallback aman
-  const match = ICON_MAP[iconName];
-  if (match) return match;
+  // 2. Jika tidak cocok, cek berdasarkan string nama ikon
+  if (iconName && ICON_NAME_MAP[iconName]) {
+    return ICON_NAME_MAP[iconName];
+  }
 
   return Tag;
 }
