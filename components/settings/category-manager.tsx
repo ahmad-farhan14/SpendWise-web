@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { getCategoryIcon } from "@/lib/utils/icon-map";
+import { getCategoryIcon, AVAILABLE_ICONS } from "@/lib/utils/icon-map";
 import type { Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,6 @@ interface CategoryManagerProps {
   onRefresh: () => void;
 }
 
-// 1. DAFTAR KATEGORI DEFAULT KONSISTEN (KEMBALI SEPERTI SEMULA)
 const DEFAULT_EXPENSE_CATEGORIES = [
   { id: "def-food", name: "Food & Drink", type: "expense", icon: "Utensils" },
   { id: "def-trans", name: "Transportation", type: "expense", icon: "Car" },
@@ -61,42 +60,74 @@ const DEFAULT_INCOME_CATEGORIES = [
   },
 ];
 
-// Deteksi Ikon Otomatis untuk Kategori Baru
-function getAutoIconName(name: string, type: "expense" | "income"): string {
+// Deteksi kata otomatis yang super lengkap
+function detectIconKeyword(name: string, type: "expense" | "income"): string {
   const lower = name.toLowerCase();
   if (
-    lower.includes("food") ||
-    lower.includes("drink") ||
     lower.includes("makan") ||
     lower.includes("minum") ||
-    lower.includes("beverage")
-  ) {
+    lower.includes("food") ||
+    lower.includes("drink")
+  )
     return "Utensils";
-  }
   if (
-    lower.includes("fuel") ||
+    lower.includes("jajan") ||
+    lower.includes("snack") ||
+    lower.includes("kopi")
+  )
+    return "Sparkles";
+  if (
+    lower.includes("bioskop") ||
+    lower.includes("nonton") ||
+    lower.includes("film") ||
+    lower.includes("cinema")
+  )
+    return "Film";
+  if (
+    lower.includes("obat") ||
+    lower.includes("apotek") ||
+    lower.includes("resep")
+  )
+    return "Pill";
+  if (
+    lower.includes("rumah sakit") ||
+    lower.includes("dokter") ||
+    lower.includes("sehat") ||
+    lower.includes("health")
+  )
+    return "HeartPulse";
+  if (
+    lower.includes("listrik") ||
+    lower.includes("pln") ||
+    lower.includes("pulsa")
+  )
+    return "Zap";
+  if (
+    lower.includes("taman") ||
+    lower.includes("kebun") ||
+    lower.includes("park")
+  )
+    return "Trees";
+  if (
+    lower.includes("belanja") ||
+    lower.includes("mall") ||
+    lower.includes("shop")
+  )
+    return "ShoppingBag";
+  if (
     lower.includes("bensin") ||
-    lower.includes("gas")
-  ) {
+    lower.includes("bbm") ||
+    lower.includes("fuel")
+  )
     return "Fuel";
-  }
   if (
     lower.includes("trans") ||
     lower.includes("travel") ||
-    lower.includes("car")
-  ) {
+    lower.includes("gojek") ||
+    lower.includes("grab")
+  )
     return "Car";
-  }
-  if (
-    lower.includes("bill") ||
-    lower.includes("tagihan") ||
-    lower.includes("listrik")
-  ) {
-    return "Receipt";
-  }
-  if (lower.includes("shop") || lower.includes("belanja")) {
-    return "ShoppingBag";
-  }
+
   return type === "expense" ? "Tag" : "Wallet";
 }
 
@@ -109,12 +140,12 @@ export function CategoryManager({
   const [editName, setEditName] = useState("");
   const [newCatName, setNewCatName] = useState("");
   const [newCatType, setNewCatType] = useState<"expense" | "income">("expense");
+  const [selectedIcon, setSelectedIcon] = useState<string>("Utensils");
   const [loading, setLoading] = useState(false);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteName, setDeleteName] = useState<string>("");
 
-  // Filter hanya kategori kustom yang dibuat user di database
   const defaultNames = [
     ...DEFAULT_EXPENSE_CATEGORIES.map((c) => c.name.toLowerCase()),
     ...DEFAULT_INCOME_CATEGORIES.map((c) => c.name.toLowerCase()),
@@ -129,18 +160,22 @@ export function CategoryManager({
   const customExpense = customCategories.filter((c) => c.type === "expense");
   const customIncome = customCategories.filter((c) => c.type === "income");
 
-  // Tambah Kategori Kustom
+  const handleNameChange = (val: string) => {
+    setNewCatName(val);
+    const autoIcon = detectIconKeyword(val, newCatType);
+    setSelectedIcon(autoIcon);
+  };
+
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
     setLoading(true);
 
-    const iconName = getAutoIconName(newCatName.trim(), newCatType);
     const supabase = createClient();
     const { error } = await supabase.from("categories").insert({
       user_id: userId,
       name: newCatName.trim(),
       type: newCatType,
-      icon: iconName,
+      icon: selectedIcon,
     });
 
     if (error) {
@@ -153,7 +188,6 @@ export function CategoryManager({
     setLoading(false);
   };
 
-  // Edit Kategori Kustom
   const handleSaveEdit = async (id: string) => {
     if (!editName.trim()) return;
     const supabase = createClient();
@@ -171,7 +205,6 @@ export function CategoryManager({
     }
   };
 
-  // Hapus Kategori Kustom
   const confirmDeleteCategory = async () => {
     if (!deleteId) return;
     const supabase = createClient();
@@ -194,7 +227,6 @@ export function CategoryManager({
     customItems: Category[],
   ) => (
     <div className="grid gap-3 sm:grid-cols-2">
-      {/* RENDER KATEGORI DEFAULT (LOCKED TOTAL) */}
       {defaultItems.map((cat) => {
         const Icon = getCategoryIcon(cat.icon, cat.name);
         return (
@@ -208,8 +240,6 @@ export function CategoryManager({
               </div>
               <span className="text-sm font-medium">{cat.name}</span>
             </div>
-
-            {/* Indikator gembok halus pada hover */}
             <div className="px-2 opacity-0 transition-opacity group-hover:opacity-100">
               <Lock className="h-3.5 w-3.5 text-muted-foreground/60" />
             </div>
@@ -217,7 +247,6 @@ export function CategoryManager({
         );
       })}
 
-      {/* RENDER KATEGORI CUSTOM (BISA EDIT & HAPUS) */}
       {customItems.map((cat) => {
         const Icon = getCategoryIcon(cat.icon, cat.name);
         const isEditing = editingId === cat.id;
@@ -302,23 +331,39 @@ export function CategoryManager({
 
   return (
     <div className="space-y-6">
-      {/* Form Tambah Kategori */}
-      <div className="flex gap-2">
+      {/* Form Tambah Kategori dengan Icon Picker List */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           placeholder="New category name..."
           value={newCatName}
-          onChange={(e) => setNewCatName(e.target.value)}
+          onChange={(e) => handleNameChange(e.target.value)}
+          className="flex-1"
         />
+
+        {/* Dropdown Pilihan Ikon */}
+        <select
+          value={selectedIcon}
+          onChange={(e) => setSelectedIcon(e.target.value)}
+          className="rounded-md border bg-background px-3 py-2 text-sm"
+        >
+          {AVAILABLE_ICONS.map((item) => (
+            <option key={item.name} value={item.name}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+
         <select
           value={newCatType}
           onChange={(e) =>
             setNewCatType(e.target.value as "expense" | "income")
           }
-          className="rounded-md border bg-background px-3 text-sm"
+          className="rounded-md border bg-background px-3 py-2 text-sm"
         >
           <option value="expense">Expense</option>
           <option value="income">Income</option>
         </select>
+
         <Button onClick={handleAddCategory} disabled={loading}>
           <Plus className="mr-1 h-4 w-4" /> Add
         </Button>
