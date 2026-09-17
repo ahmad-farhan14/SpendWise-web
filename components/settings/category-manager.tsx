@@ -172,7 +172,8 @@ export function CategoryManager({
   const renderCategoryList = (items: Category[]) => (
     <div className="grid gap-3 sm:grid-cols-2">
       {items.map((cat) => {
-        const Icon = getCategoryIcon(cat.icon);
+        // PASSING PARAMETER KEDUA: cat.name
+        const Icon = getCategoryIcon(cat.icon, cat.name);
         const isEditing = editingId === cat.id;
         const isDefault = DEFAULT_CATEGORY_NAMES.includes(cat.name);
 
