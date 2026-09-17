@@ -80,6 +80,86 @@ export function CategoryManager({
     }
   };
 
+  const expenseCategories = categories.filter((c) => c.type === "expense");
+  const incomeCategories = categories.filter((c) => c.type === "income");
+
+  const renderCategoryList = (items: Category[]) => (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {items.map((cat) => {
+        const Icon = getCategoryIcon(cat.icon);
+        const isEditing = editingId === cat.id;
+
+        return (
+          <div
+            key={cat.id}
+            className="flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </div>
+              {isEditing ? (
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="h-8 w-36 text-sm"
+                  autoFocus
+                />
+              ) : (
+                <span className="text-sm font-medium">{cat.name}</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1">
+              {isEditing ? (
+                <>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleSaveEdit(cat.id)}
+                    className="h-8 w-8 text-green-500 hover:text-green-600"
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setEditingId(null)}
+                    className="h-8 w-8 text-muted-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingId(cat.id);
+                      setEditName(cat.name);
+                    }}
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleDeleteCategory(cat.id)}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Form Tambah Kategori */}
@@ -104,73 +184,20 @@ export function CategoryManager({
         </Button>
       </div>
 
-      {/* List Kategori dengan Aksi Edit dan Delete */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {categories.map((cat) => {
-          const Icon = getCategoryIcon(cat.icon);
-          const isEditing = editingId === cat.id;
+      {/* Expense Categories */}
+      <div className="space-y-2">
+        <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider">
+          Expense Categories
+        </h4>
+        {renderCategoryList(expenseCategories)}
+      </div>
 
-          return (
-            <div
-              key={cat.id}
-              className="flex items-center justify-between rounded-lg border p-3"
-            >
-              <div className="flex items-center gap-2">
-                <Icon className="h-4 w-4 text-muted-foreground" />
-                {isEditing ? (
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="h-8 w-36 text-sm"
-                  />
-                ) : (
-                  <span className="text-sm font-medium">{cat.name}</span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1">
-                {isEditing ? (
-                  <>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleSaveEdit(cat.id)}
-                    >
-                      <Check className="h-4 w-4 text-green-500" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => setEditingId(null)}
-                    >
-                      <X className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingId(cat.id);
-                        setEditName(cat.name);
-                      }}
-                    >
-                      <Edit2 className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleDeleteCategory(cat.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {/* Income Categories */}
+      <div className="space-y-2">
+        <h4 className="text-xs font-semibold text-brand uppercase tracking-wider">
+          Income Categories
+        </h4>
+        {renderCategoryList(incomeCategories)}
       </div>
     </div>
   );
