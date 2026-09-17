@@ -26,7 +26,7 @@ export function CategoryManager({
   const [newCatType, setNewCatType] = useState<"expense" | "income">("expense");
   const [loading, setLoading] = useState(false);
 
-  // Tambah Kategori
+  // Handle Add Category
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
     setLoading(true);
@@ -48,7 +48,7 @@ export function CategoryManager({
     setLoading(false);
   };
 
-  // Edit Kategori
+  // Handle Save Edit
   const handleSaveEdit = async (id: string) => {
     if (!editName.trim()) return;
     const supabase = createClient();
@@ -58,7 +58,7 @@ export function CategoryManager({
       .eq("id", id);
 
     if (error) {
-      toast.error(error.message);
+      toast.error("Failed to update category: " + error.message);
     } else {
       toast.success("Category updated");
       setEditingId(null);
@@ -66,14 +66,14 @@ export function CategoryManager({
     }
   };
 
-  // Hapus Kategori
+  // Handle Delete Category
   const handleDeleteCategory = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
     const supabase = createClient();
     const { error } = await supabase.from("categories").delete().eq("id", id);
 
     if (error) {
-      toast.error(error.message);
+      toast.error("Failed to delete category: " + error.message);
     } else {
       toast.success("Category deleted");
       onRefresh();
@@ -116,7 +116,11 @@ export function CategoryManager({
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleSaveEdit(cat.id)}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveEdit(cat.id);
+                    }}
                     className="h-8 w-8 text-green-500 hover:text-green-600"
                   >
                     <Check className="h-4 w-4" />
@@ -124,7 +128,11 @@ export function CategoryManager({
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => setEditingId(null)}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingId(null);
+                    }}
                     className="h-8 w-8 text-muted-foreground"
                   >
                     <X className="h-4 w-4" />
@@ -135,7 +143,9 @@ export function CategoryManager({
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => {
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setEditingId(cat.id);
                       setEditName(cat.name);
                     }}
@@ -146,7 +156,11 @@ export function CategoryManager({
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleDeleteCategory(cat.id)}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCategory(cat.id);
+                    }}
                     className="h-8 w-8 text-destructive hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
