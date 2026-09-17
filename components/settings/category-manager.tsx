@@ -60,71 +60,81 @@ const DEFAULT_INCOME_CATEGORIES = [
   },
 ];
 
-// Deteksi kata otomatis yang super lengkap
 function detectIconKeyword(name: string, type: "expense" | "income"): string {
   const lower = name.toLowerCase();
   if (
+    lower.includes("food") ||
+    lower.includes("drink") ||
     lower.includes("makan") ||
     lower.includes("minum") ||
-    lower.includes("food") ||
-    lower.includes("drink")
+    lower.includes("beverage")
   )
     return "Utensils";
   if (
-    lower.includes("jajan") ||
     lower.includes("snack") ||
-    lower.includes("kopi")
+    lower.includes("coffee") ||
+    lower.includes("kopi") ||
+    lower.includes("jajan")
   )
     return "Sparkles";
   if (
-    lower.includes("bioskop") ||
-    lower.includes("nonton") ||
+    lower.includes("movie") ||
+    lower.includes("cinema") ||
     lower.includes("film") ||
-    lower.includes("cinema")
+    lower.includes("nonton") ||
+    lower.includes("bioskop")
   )
     return "Film";
   if (
+    lower.includes("medicine") ||
+    lower.includes("pharmacy") ||
+    lower.includes("drug") ||
     lower.includes("obat") ||
-    lower.includes("apotek") ||
-    lower.includes("resep")
+    lower.includes("apotek")
   )
     return "Pill";
   if (
-    lower.includes("rumah sakit") ||
-    lower.includes("dokter") ||
-    lower.includes("sehat") ||
-    lower.includes("health")
+    lower.includes("hospital") ||
+    lower.includes("doctor") ||
+    lower.includes("health") ||
+    lower.includes("medical") ||
+    lower.includes("sehat")
   )
     return "HeartPulse";
   if (
+    lower.includes("electricity") ||
+    lower.includes("power") ||
+    lower.includes("energy") ||
     lower.includes("listrik") ||
-    lower.includes("pln") ||
-    lower.includes("pulsa")
+    lower.includes("pln")
   )
     return "Zap";
   if (
+    lower.includes("park") ||
+    lower.includes("garden") ||
     lower.includes("taman") ||
-    lower.includes("kebun") ||
-    lower.includes("park")
+    lower.includes("kebun")
   )
     return "Trees";
   if (
-    lower.includes("belanja") ||
+    lower.includes("shop") ||
     lower.includes("mall") ||
-    lower.includes("shop")
+    lower.includes("store") ||
+    lower.includes("belanja")
   )
     return "ShoppingBag";
   if (
-    lower.includes("bensin") ||
-    lower.includes("bbm") ||
-    lower.includes("fuel")
+    lower.includes("fuel") ||
+    lower.includes("gas") ||
+    lower.includes("petrol") ||
+    lower.includes("bensin")
   )
     return "Fuel";
   if (
     lower.includes("trans") ||
     lower.includes("travel") ||
-    lower.includes("gojek") ||
-    lower.includes("grab")
+    lower.includes("car") ||
+    lower.includes("taxi")
   )
     return "Car";
 
@@ -331,7 +341,6 @@ export function CategoryManager({
 
   return (
     <div className="space-y-6">
-      {/* Form Tambah Kategori dengan Icon Picker List */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           placeholder="New category name..."
@@ -340,7 +349,6 @@ export function CategoryManager({
           className="flex-1"
         />
 
-        {/* Dropdown Pilihan Ikon */}
         <select
           value={selectedIcon}
           onChange={(e) => setSelectedIcon(e.target.value)}
@@ -369,7 +377,6 @@ export function CategoryManager({
         </Button>
       </div>
 
-      {/* Expense Categories */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider">
           Expense Categories
@@ -377,7 +384,6 @@ export function CategoryManager({
         {renderCategoryList(DEFAULT_EXPENSE_CATEGORIES, customExpense)}
       </div>
 
-      {/* Income Categories */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-brand uppercase tracking-wider">
           Income Categories
@@ -385,7 +391,6 @@ export function CategoryManager({
         {renderCategoryList(DEFAULT_INCOME_CATEGORIES, customIncome)}
       </div>
 
-      {/* Modal Dialog Hapus Custom */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -23,26 +23,26 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Daftar ikon yang bisa dipilih pengguna di UI
+// List of available icons for the UI picker dropdown in English
 export const AVAILABLE_ICONS = [
-  { name: "Utensils", label: "Makanan/Minuman", icon: Utensils },
-  { name: "Car", label: "Transportasi", icon: Car },
-  { name: "ShoppingBag", label: "Belanja", icon: ShoppingBag },
-  { name: "Receipt", label: "Tagihan", icon: Receipt },
-  { name: "Film", label: "Hiburan/Bioskop", icon: Film },
-  { name: "HeartPulse", label: "Kesehatan/RS", icon: HeartPulse },
-  { name: "Pill", label: "Obat/Apotek", icon: Pill },
-  { name: "Zap", label: "Listrik/Listrik", icon: Zap },
-  { name: "Trees", label: "Taman/Taman", icon: Trees },
-  { name: "Fuel", label: "Bensin/Gas", icon: Fuel },
-  { name: "Sparkles", label: "Jajan/Gaya Hidup", icon: Sparkles },
-  { name: "Wallet", label: "Gaji/Dompet", icon: Wallet },
-  { name: "Briefcase", label: "Kerja/Freelance", icon: Briefcase },
-  { name: "TrendingUp", label: "Investasi", icon: TrendingUp },
-  { name: "Home", label: "Rumah/Properti", icon: Home },
-  { name: "GraduationCap", label: "Pendidikan", icon: GraduationCap },
-  { name: "Plane", label: "Liburan/Travel", icon: Plane },
-  { name: "Tag", label: "Lainnya", icon: Tag },
+  { name: "Utensils", label: "Food & Drinks", icon: Utensils },
+  { name: "Car", label: "Transportation", icon: Car },
+  { name: "ShoppingBag", label: "Shopping", icon: ShoppingBag },
+  { name: "Receipt", label: "Bills & Utilities", icon: Receipt },
+  { name: "Film", label: "Entertainment", icon: Film },
+  { name: "HeartPulse", label: "Health & Medical", icon: HeartPulse },
+  { name: "Pill", label: "Medicine & Pharmacy", icon: Pill },
+  { name: "Zap", label: "Electricity & Energy", icon: Zap },
+  { name: "Trees", label: "Park & Garden", icon: Trees },
+  { name: "Fuel", label: "Gas & Fuel", icon: Fuel },
+  { name: "Sparkles", label: "Snacks & Lifestyle", icon: Sparkles },
+  { name: "Wallet", label: "Salary & Wallet", icon: Wallet },
+  { name: "Briefcase", label: "Work & Freelance", icon: Briefcase },
+  { name: "TrendingUp", label: "Investment", icon: TrendingUp },
+  { name: "Home", label: "Housing & Rent", icon: Home },
+  { name: "GraduationCap", label: "Education", icon: GraduationCap },
+  { name: "Plane", label: "Travel & Vacation", icon: Plane },
+  { name: "Tag", label: "Other / General", icon: Tag },
 ];
 
 const CATEGORY_NAME_MAP: Record<string, LucideIcon> = {
