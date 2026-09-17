@@ -301,7 +301,8 @@ export function TransactionModal({
                   </SelectTrigger>
                   <SelectContent>
                     {filteredCategories.map((cat) => {
-                      const Icon = getCategoryIcon(cat.icon);
+                      // PERBAIKAN: Melewatkan cat.name sebagai parameter kedua
+                      const Icon = getCategoryIcon(cat.icon, cat.name);
                       return (
                         <SelectItem key={cat.id} value={cat.id}>
                           <span className="flex items-center gap-2">

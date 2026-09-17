@@ -23,7 +23,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// List of available icons for the UI picker dropdown in English
 export const AVAILABLE_ICONS = [
   { name: "Utensils", label: "Food & Drinks", icon: Utensils },
   { name: "Car", label: "Transportation", icon: Car },
@@ -46,6 +45,7 @@ export const AVAILABLE_ICONS = [
 ];
 
 const CATEGORY_NAME_MAP: Record<string, LucideIcon> = {
+  // Default Expense
   "Food & Drink": Utensils,
   "Food and Drink": Utensils,
   "Food & Beverages": Utensils,
@@ -56,9 +56,22 @@ const CATEGORY_NAME_MAP: Record<string, LucideIcon> = {
   Entertainment: Film,
   Health: HeartPulse,
   Other: MoreHorizontal,
+
+  // Default Income
   Salary: Wallet,
   Freelance: Briefcase,
   Investment: TrendingUp,
+
+  // Custom Indonesian Keywords Fallback
+  Makan: Utensils,
+  Minum: Utensils,
+  Jajan: Sparkles,
+  Belanja: ShoppingBag,
+  Bioskop: Film,
+  Obat: Pill,
+  Listrik: Zap,
+  Taman: Trees,
+  Bensin: Fuel,
 };
 
 const ICON_NAME_MAP: Record<string, LucideIcon> = {
@@ -89,10 +102,12 @@ export function getCategoryIcon(
   iconName?: string,
   categoryName?: string,
 ): LucideIcon {
+  // 1. Cek nama kategori bawaan / kustom umum
   if (categoryName && CATEGORY_NAME_MAP[categoryName]) {
     return CATEGORY_NAME_MAP[categoryName];
   }
 
+  // 2. Cek nama ikon tersimpan
   if (iconName && ICON_NAME_MAP[iconName]) {
     return ICON_NAME_MAP[iconName];
   }
