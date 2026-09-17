@@ -6,7 +6,15 @@ import { getCategoryIcon } from "@/lib/utils/icon-map";
 import type { Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Edit2, Check, X, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  Check,
+  X,
+  AlertTriangle,
+  Lock,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -25,6 +33,50 @@ interface CategoryManagerProps {
   onRefresh: () => void;
 }
 
+// Daftar kategori bawaan sistem yang dikunci
+const DEFAULT_CATEGORY_NAMES = [
+  "Transportation",
+  "Shopping",
+  "Bills",
+  "Entertainment",
+  "Health",
+  "Other",
+  "Salary",
+  "Freelance",
+  "Investment",
+];
+
+// Menentukan nama ikon otomatis berdasarkan teks kategori baru
+function getAutoIconName(name: string, type: "expense" | "income"): string {
+  const lower = name.toLowerCase();
+  if (
+    lower.includes("food") ||
+    lower.includes("drink") ||
+    lower.includes("makan") ||
+    lower.includes("minum")
+  ) {
+    return "Utensils";
+  }
+  if (
+    lower.includes("trans") ||
+    lower.includes("travel") ||
+    lower.includes("bensin")
+  ) {
+    return "Car";
+  }
+  if (
+    lower.includes("bill") ||
+    lower.includes("tagihan") ||
+    lower.includes("listrik")
+  ) {
+    return "Receipt";
+  }
+  if (lower.includes("shop") || lower.includes("belanja")) {
+    return "ShoppingBag";
+  }
+  return type === "expense" ? "Tag" : "Wallet";
+}
+
 export function CategoryManager({
   categories,
   userId,
@@ -36,11 +88,10 @@ export function CategoryManager({
   const [newCatType, setNewCatType] = useState<"expense" | "income">("expense");
   const [loading, setLoading] = useState(false);
 
-  // State untuk Modal Hapus Custom
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteName, setDeleteName] = useState<string>("");
 
-  // Bersihkan data duplikat kategori jika ada di database
+  // Filter duplikat kategori di tingkat UI
   const uniqueCategories = useMemo(() => {
     const seen = new Set<string>();
     return categories.filter((cat) => {
@@ -51,16 +102,18 @@ export function CategoryManager({
     });
   }, [categories]);
 
-  // Tambah Kategori
+  // Tambah Kategori Baru dengan Ikon Otomatis
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
     setLoading(true);
+
+    const iconName = getAutoIconName(newCatName.trim(), newCatType);
     const supabase = createClient();
     const { error } = await supabase.from("categories").insert({
       user_id: userId,
       name: newCatName.trim(),
       type: newCatType,
-      icon: newCatType === "expense" ? "Tag" : "Wallet",
+      icon: iconName,
     });
 
     if (error) {
@@ -120,6 +173,9 @@ export function CategoryManager({
         const Icon = getCategoryIcon(cat.icon);
         const isEditing = editingId === cat.id;
 
+        // Cek apakah kategori merupakan bawaan sistem (tanpa membaca properti is_default)
+        const isDefault = DEFAULT_CATEGORY_NAMES.includes(cat.name);
+
         return (
           <div
             key={cat.id}
@@ -137,12 +193,23 @@ export function CategoryManager({
                   autoFocus
                 />
               ) : (
-                <span className="text-sm font-medium">{cat.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{cat.name}</span>
+                  {isDefault && (
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
+                      Default
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
             <div className="flex items-center gap-1">
-              {isEditing ? (
+              {isDefault ? (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground italic px-2">
+                  <Lock className="h-3 w-3" /> Locked
+                </span>
+              ) : isEditing ? (
                 <>
                   <Button
                     size="icon"
