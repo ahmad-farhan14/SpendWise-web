@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getCategoryIcon } from "@/lib/utils/icon-map";
 import type { Category } from "@/lib/types";
@@ -33,18 +33,35 @@ interface CategoryManagerProps {
   onRefresh: () => void;
 }
 
-const DEFAULT_CATEGORY_NAMES = [
-  "Transportation",
-  "Shopping",
-  "Bills",
-  "Entertainment",
-  "Health",
-  "Other",
-  "Salary",
-  "Freelance",
-  "Investment",
+// 1. DAFTAR KATEGORI DEFAULT KONSISTEN (KEMBALI SEPERTI SEMULA)
+const DEFAULT_EXPENSE_CATEGORIES = [
+  { id: "def-food", name: "Food & Drink", type: "expense", icon: "Utensils" },
+  { id: "def-trans", name: "Transportation", type: "expense", icon: "Car" },
+  { id: "def-shop", name: "Shopping", type: "expense", icon: "ShoppingBag" },
+  { id: "def-bills", name: "Bills", type: "expense", icon: "Receipt" },
+  { id: "def-ent", name: "Entertainment", type: "expense", icon: "Film" },
+  { id: "def-health", name: "Health", type: "expense", icon: "HeartPulse" },
+  {
+    id: "def-other-exp",
+    name: "Other",
+    type: "expense",
+    icon: "MoreHorizontal",
+  },
 ];
 
+const DEFAULT_INCOME_CATEGORIES = [
+  { id: "def-salary", name: "Salary", type: "income", icon: "Wallet" },
+  { id: "def-free", name: "Freelance", type: "income", icon: "Briefcase" },
+  { id: "def-inv", name: "Investment", type: "income", icon: "TrendingUp" },
+  {
+    id: "def-other-inc",
+    name: "Other",
+    type: "income",
+    icon: "MoreHorizontal",
+  },
+];
+
+// Deteksi Ikon Otomatis untuk Kategori Baru
 function getAutoIconName(name: string, type: "expense" | "income"): string {
   const lower = name.toLowerCase();
   if (
@@ -97,16 +114,22 @@ export function CategoryManager({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteName, setDeleteName] = useState<string>("");
 
-  const uniqueCategories = useMemo(() => {
-    const seen = new Set<string>();
-    return categories.filter((cat) => {
-      const key = `${cat.name.toLowerCase()}-${cat.type}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [categories]);
+  // Filter hanya kategori kustom yang dibuat user di database
+  const defaultNames = [
+    ...DEFAULT_EXPENSE_CATEGORIES.map((c) => c.name.toLowerCase()),
+    ...DEFAULT_INCOME_CATEGORIES.map((c) => c.name.toLowerCase()),
+    "food and beverages",
+    "food and drink",
+  ];
 
+  const customCategories = categories.filter(
+    (c) => !defaultNames.includes(c.name.toLowerCase()),
+  );
+
+  const customExpense = customCategories.filter((c) => c.type === "expense");
+  const customIncome = customCategories.filter((c) => c.type === "income");
+
+  // Tambah Kategori Kustom
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
     setLoading(true);
@@ -130,6 +153,7 @@ export function CategoryManager({
     setLoading(false);
   };
 
+  // Edit Kategori Kustom
   const handleSaveEdit = async (id: string) => {
     if (!editName.trim()) return;
     const supabase = createClient();
@@ -147,6 +171,7 @@ export function CategoryManager({
     }
   };
 
+  // Hapus Kategori Kustom
   const confirmDeleteCategory = async () => {
     if (!deleteId) return;
     const supabase = createClient();
@@ -164,23 +189,43 @@ export function CategoryManager({
     setDeleteId(null);
   };
 
-  const expenseCategories = uniqueCategories.filter(
-    (c) => c.type === "expense",
-  );
-  const incomeCategories = uniqueCategories.filter((c) => c.type === "income");
-
-  const renderCategoryList = (items: Category[]) => (
+  const renderCategoryList = (
+    defaultItems: typeof DEFAULT_EXPENSE_CATEGORIES,
+    customItems: Category[],
+  ) => (
     <div className="grid gap-3 sm:grid-cols-2">
-      {items.map((cat) => {
-        // PASSING PARAMETER KEDUA: cat.name
+      {/* RENDER KATEGORI DEFAULT (LOCKED TOTAL) */}
+      {defaultItems.map((cat) => {
+        const Icon = getCategoryIcon(cat.icon, cat.name);
+        return (
+          <div
+            key={cat.id}
+            className="group flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <span className="text-sm font-medium">{cat.name}</span>
+            </div>
+
+            {/* Indikator gembok halus pada hover */}
+            <div className="px-2 opacity-0 transition-opacity group-hover:opacity-100">
+              <Lock className="h-3.5 w-3.5 text-muted-foreground/60" />
+            </div>
+          </div>
+        );
+      })}
+
+      {/* RENDER KATEGORI CUSTOM (BISA EDIT & HAPUS) */}
+      {customItems.map((cat) => {
         const Icon = getCategoryIcon(cat.icon, cat.name);
         const isEditing = editingId === cat.id;
-        const isDefault = DEFAULT_CATEGORY_NAMES.includes(cat.name);
 
         return (
           <div
             key={cat.id}
-            className="group flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700"
+            className="flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700"
           >
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
@@ -199,18 +244,14 @@ export function CategoryManager({
             </div>
 
             <div className="flex items-center gap-1">
-              {isDefault ? (
-                <div className="px-2 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Lock className="h-3.5 w-3.5 text-muted-foreground/60" />
-                </div>
-              ) : isEditing ? (
+              {isEditing ? (
                 <>
                   <Button
                     size="icon"
                     variant="ghost"
                     type="button"
                     onClick={() => handleSaveEdit(cat.id)}
-                    className="h-8 w-8 text-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950/30"
+                    className="h-8 w-8 text-green-500 hover:bg-green-50"
                   >
                     <Check className="h-4 w-4" />
                   </Button>
@@ -246,7 +287,7 @@ export function CategoryManager({
                       setDeleteId(cat.id);
                       setDeleteName(cat.name);
                     }}
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -261,6 +302,7 @@ export function CategoryManager({
 
   return (
     <div className="space-y-6">
+      {/* Form Tambah Kategori */}
       <div className="flex gap-2">
         <Input
           placeholder="New category name..."
@@ -282,20 +324,23 @@ export function CategoryManager({
         </Button>
       </div>
 
+      {/* Expense Categories */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider">
           Expense Categories
         </h4>
-        {renderCategoryList(expenseCategories)}
+        {renderCategoryList(DEFAULT_EXPENSE_CATEGORIES, customExpense)}
       </div>
 
+      {/* Income Categories */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-brand uppercase tracking-wider">
           Income Categories
         </h4>
-        {renderCategoryList(incomeCategories)}
+        {renderCategoryList(DEFAULT_INCOME_CATEGORIES, customIncome)}
       </div>
 
+      {/* Modal Dialog Hapus Custom */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
