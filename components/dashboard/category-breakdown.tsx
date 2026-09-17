@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { getCategoryIcon } from "@/lib/utils/icon-map";
 import { formatCurrency } from "@/lib/utils/currency";
+import { convertCurrency } from "@/lib/utils/currency-converter";
 import type { Transaction, Category, CurrencyCode } from "@/lib/types";
 import { PieChart } from "lucide-react";
 
@@ -31,22 +32,30 @@ export function CategoryBreakdown({
 
     const monthExpenses = transactions.filter((t) => {
       const tDate = new Date(t.transaction_date);
-      return (
-        t.type === "expense" && t.currency === currency && tDate >= monthStart
-      );
+      return t.type === "expense" && tDate >= monthStart;
     });
 
-    const totalExpense = monthExpenses.reduce(
-      (sum, t) => sum + Number(t.amount),
-      0,
-    );
+    const totalExpense = monthExpenses.reduce((sum, t) => {
+      const convertedAmount = convertCurrency(
+        Number(t.amount),
+        t.currency,
+        currency,
+      );
+      return sum + convertedAmount;
+    }, 0);
+
     if (totalExpense === 0) return [];
 
     const byCategory = new Map<string, number>();
     for (const t of monthExpenses) {
+      const convertedAmount = convertCurrency(
+        Number(t.amount),
+        t.currency,
+        currency,
+      );
       byCategory.set(
         t.category_id,
-        (byCategory.get(t.category_id) ?? 0) + Number(t.amount),
+        (byCategory.get(t.category_id) ?? 0) + convertedAmount,
       );
     }
 

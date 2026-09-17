@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, AlertTriangle, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/currency";
+import { convertCurrency } from "@/lib/utils/currency-converter";
 import type { Transaction, CurrencyCode } from "@/lib/types";
 import { endOfMonth, differenceInDays } from "date-fns";
 
@@ -25,20 +26,28 @@ export function SummaryCard({ transactions, currency }: SummaryCardProps) {
     const monthEnd = endOfMonth(now);
     const daysLeft = Math.max(differenceInDays(monthEnd, now) + 1, 0);
 
+    // Ambil semua transaksi bulan ini
     const monthTxns = transactions.filter((t) => {
       const tDate = new Date(t.transaction_date);
-      return (
-        t.currency === currency && tDate >= monthStart && tDate <= monthEnd
-      );
+      return tDate >= monthStart && tDate <= monthEnd;
     });
 
+    // Konversi tiap transaksi ke base currency sebelum dikalkulasi
     const income = monthTxns
       .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+      .reduce(
+        (sum, t) =>
+          sum + convertCurrency(Number(t.amount), t.currency, currency),
+        0,
+      );
 
     const expense = monthTxns
       .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+      .reduce(
+        (sum, t) =>
+          sum + convertCurrency(Number(t.amount), t.currency, currency),
+        0,
+      );
 
     const net = income - expense;
     const daily = daysLeft > 0 ? net / daysLeft : net;
@@ -70,7 +79,6 @@ export function SummaryCard({ transactions, currency }: SummaryCardProps) {
             </span>
           </div>
 
-          {/* Dynamic text size with break-words so long currency values fit cleanly */}
           <div
             className={`mt-3 text-2xl font-bold tracking-tight break-words tabular-nums sm:text-3xl lg:text-4xl ${
               isNegative ? "text-red-400" : "text-blue-400"
