@@ -82,11 +82,12 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {/* Currency notice */}
+      {/* Currency notice (Sudah Diperbaiki) */}
       <div className="rounded-lg border border-brand/20 bg-brand/5 px-4 py-2.5 text-sm text-muted-foreground">
-        Showing transactions in{" "}
+        Showing transactions converted to{" "}
         <span className="font-semibold text-brand">{currentCurrency}</span>.
-        Transactions in other currencies are not included in this summary.
+        Foreign currency transactions are automatically aggregated using
+        exchange rates.
       </div>
 
       {loading ? (
@@ -148,8 +149,9 @@ export default function DashboardPage() {
                 ) : (
                   <div className="space-y-1">
                     {recentTransactions.map((t) => {
-                      const cat = t.categories;
-                      const Icon = cat ? getCategoryIcon(cat.icon) : Receipt;
+                      const catName = t.categories?.name ?? "Other";
+                      // Melewatkan cat.name sebagai argumen kedua
+                      const Icon = getCategoryIcon(t.categories?.icon, catName);
                       return (
                         <div
                           key={t.id}
@@ -160,9 +162,7 @@ export default function DashboardPage() {
                               <Icon className="h-4 w-4" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium">
-                                {cat?.name ?? "Unknown"}
-                              </p>
+                              <p className="text-sm font-medium">{catName}</p>
                               <p className="text-xs text-muted-foreground">
                                 {format(
                                   new Date(t.transaction_date),
