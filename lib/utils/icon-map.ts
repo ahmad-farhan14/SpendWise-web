@@ -1,32 +1,35 @@
 import {
   Utensils,
   Car,
-  ShoppingBag,
   Receipt,
+  ShoppingBag,
   Film,
   HeartPulse,
   MoreHorizontal,
-  Wallet,
-  Laptop,
+  Briefcase,
   TrendingUp,
-  Circle,
+  Wallet,
+  Tag,
+  Fuel,
   type LucideIcon,
-} from 'lucide-react';
+} from "lucide-react";
 
-const iconMap: Record<string, LucideIcon> = {
-  utensils: Utensils,
-  car: Car,
-  'shopping-bag': ShoppingBag,
-  receipt: Receipt,
-  film: Film,
-  'heart-pulse': HeartPulse,
-  'more-horizontal': MoreHorizontal,
-  wallet: Wallet,
-  laptop: Laptop,
-  'trending-up': TrendingUp,
-  circle: Circle,
+const ICON_MAP: Record<string, LucideIcon> = {
+  Utensils,
+  Car,
+  Receipt,
+  ShoppingBag,
+  Film,
+  HeartPulse,
+  MoreHorizontal,
+  Briefcase,
+  TrendingUp,
+  Wallet,
+  Tag,
+  Fuel,
 };
 
-export function getCategoryIcon(iconName: string): LucideIcon {
-  return iconMap[iconName] ?? Circle;
+export function getCategoryIcon(iconName?: string): LucideIcon {
+  if (!iconName) return Tag;
+  return ICON_MAP[iconName] || Tag;
 }

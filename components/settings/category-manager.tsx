@@ -33,7 +33,6 @@ interface CategoryManagerProps {
   onRefresh: () => void;
 }
 
-// Daftar kategori bawaan sistem yang dikunci
 const DEFAULT_CATEGORY_NAMES = [
   "Transportation",
   "Shopping",
@@ -46,21 +45,28 @@ const DEFAULT_CATEGORY_NAMES = [
   "Investment",
 ];
 
-// Menentukan nama ikon otomatis berdasarkan teks kategori baru
 function getAutoIconName(name: string, type: "expense" | "income"): string {
   const lower = name.toLowerCase();
   if (
     lower.includes("food") ||
     lower.includes("drink") ||
     lower.includes("makan") ||
-    lower.includes("minum")
+    lower.includes("minum") ||
+    lower.includes("beverage")
   ) {
     return "Utensils";
   }
   if (
+    lower.includes("fuel") ||
+    lower.includes("bensin") ||
+    lower.includes("gas")
+  ) {
+    return "Fuel";
+  }
+  if (
     lower.includes("trans") ||
     lower.includes("travel") ||
-    lower.includes("bensin")
+    lower.includes("car")
   ) {
     return "Car";
   }
@@ -91,7 +97,6 @@ export function CategoryManager({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteName, setDeleteName] = useState<string>("");
 
-  // Filter duplikat kategori di tingkat UI
   const uniqueCategories = useMemo(() => {
     const seen = new Set<string>();
     return categories.filter((cat) => {
@@ -102,7 +107,6 @@ export function CategoryManager({
     });
   }, [categories]);
 
-  // Tambah Kategori Baru dengan Ikon Otomatis
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
     setLoading(true);
@@ -126,7 +130,6 @@ export function CategoryManager({
     setLoading(false);
   };
 
-  // Edit Kategori
   const handleSaveEdit = async (id: string) => {
     if (!editName.trim()) return;
     const supabase = createClient();
@@ -144,7 +147,6 @@ export function CategoryManager({
     }
   };
 
-  // Hapus Kategori
   const confirmDeleteCategory = async () => {
     if (!deleteId) return;
     const supabase = createClient();
@@ -172,14 +174,12 @@ export function CategoryManager({
       {items.map((cat) => {
         const Icon = getCategoryIcon(cat.icon);
         const isEditing = editingId === cat.id;
-
-        // Cek apakah kategori merupakan bawaan sistem (tanpa membaca properti is_default)
         const isDefault = DEFAULT_CATEGORY_NAMES.includes(cat.name);
 
         return (
           <div
             key={cat.id}
-            className="flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700"
+            className="group flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700"
           >
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
@@ -193,22 +193,15 @@ export function CategoryManager({
                   autoFocus
                 />
               ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{cat.name}</span>
-                  {isDefault && (
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800">
-                      Default
-                    </span>
-                  )}
-                </div>
+                <span className="text-sm font-medium">{cat.name}</span>
               )}
             </div>
 
             <div className="flex items-center gap-1">
               {isDefault ? (
-                <span className="flex items-center gap-1 text-xs text-muted-foreground italic px-2">
-                  <Lock className="h-3 w-3" /> Locked
-                </span>
+                <div className="px-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground/60" />
+                </div>
               ) : isEditing ? (
                 <>
                   <Button
@@ -267,7 +260,6 @@ export function CategoryManager({
 
   return (
     <div className="space-y-6">
-      {/* Form Tambah Kategori */}
       <div className="flex gap-2">
         <Input
           placeholder="New category name..."
@@ -289,7 +281,6 @@ export function CategoryManager({
         </Button>
       </div>
 
-      {/* Expense Categories */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-destructive uppercase tracking-wider">
           Expense Categories
@@ -297,7 +288,6 @@ export function CategoryManager({
         {renderCategoryList(expenseCategories)}
       </div>
 
-      {/* Income Categories */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-brand uppercase tracking-wider">
           Income Categories
@@ -305,7 +295,6 @@ export function CategoryManager({
         {renderCategoryList(incomeCategories)}
       </div>
 
-      {/* Custom Modal Dialog Hapus */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
