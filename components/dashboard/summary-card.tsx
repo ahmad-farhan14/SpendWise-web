@@ -4,7 +4,10 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, AlertTriangle, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/currency";
-import { convertCurrency } from "@/lib/utils/currency-converter";
+import {
+  convertCurrency,
+  useExchangeRates,
+} from "@/lib/utils/currency-converter";
 import type { Transaction, CurrencyCode } from "@/lib/types";
 import { endOfMonth, differenceInDays } from "date-fns";
 
@@ -14,6 +17,7 @@ interface SummaryCardProps {
 }
 
 export function SummaryCard({ transactions, currency }: SummaryCardProps) {
+  const rates = useExchangeRates();
   const {
     totalIncome,
     totalExpense,
@@ -37,7 +41,7 @@ export function SummaryCard({ transactions, currency }: SummaryCardProps) {
       .filter((t) => t.type === "income")
       .reduce(
         (sum, t) =>
-          sum + convertCurrency(Number(t.amount), t.currency, currency),
+          sum + convertCurrency(Number(t.amount), t.currency, currency, rates),
         0,
       );
 
@@ -45,7 +49,7 @@ export function SummaryCard({ transactions, currency }: SummaryCardProps) {
       .filter((t) => t.type === "expense")
       .reduce(
         (sum, t) =>
-          sum + convertCurrency(Number(t.amount), t.currency, currency),
+          sum + convertCurrency(Number(t.amount), t.currency, currency, rates),
         0,
       );
 
@@ -59,7 +63,7 @@ export function SummaryCard({ transactions, currency }: SummaryCardProps) {
       safeToSpendDaily: daily,
       daysRemaining: daysLeft,
     };
-  }, [transactions, currency]);
+  }, [transactions, currency, rates]);
 
   const isNegative = netBalance < 0;
   const safeSpendNegative = safeToSpendDaily < 0;

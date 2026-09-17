@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, ArrowRight, Receipt } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/currency";
+import {
+  convertCurrency,
+  useExchangeRates,
+} from "@/lib/utils/currency-converter";
 import { getCategoryIcon } from "@/lib/utils/icon-map";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -20,6 +24,7 @@ import { toast } from "sonner";
 export default function DashboardPage() {
   const { profile } = useAuth();
   const { currency } = useCurrency();
+  const rates = useExchangeRates();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -180,7 +185,15 @@ export default function DashboardPage() {
                             }`}
                           >
                             {t.type === "income" ? "+" : "-"}
-                            {formatCurrency(Number(t.amount), t.currency)}
+                            {formatCurrency(
+                              convertCurrency(
+                                Number(t.amount),
+                                t.currency,
+                                currentCurrency,
+                                rates,
+                              ),
+                              currentCurrency,
+                            )}
                           </span>
                         </div>
                       );

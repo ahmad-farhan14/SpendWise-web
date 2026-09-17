@@ -5,7 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { getCategoryIcon } from "@/lib/utils/icon-map";
 import { formatCurrency } from "@/lib/utils/currency";
-import { convertCurrency } from "@/lib/utils/currency-converter";
+import {
+  convertCurrency,
+  useExchangeRates,
+} from "@/lib/utils/currency-converter";
 import type { Transaction, Category, CurrencyCode } from "@/lib/types";
 import { PieChart } from "lucide-react";
 
@@ -26,6 +29,7 @@ export function CategoryBreakdown({
   categories,
   currency,
 }: CategoryBreakdownProps) {
+  const rates = useExchangeRates();
   const breakdown = useMemo<BreakdownItem[]>(() => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -40,6 +44,7 @@ export function CategoryBreakdown({
         Number(t.amount),
         t.currency,
         currency,
+        rates,
       );
       return sum + convertedAmount;
     }, 0);
@@ -52,6 +57,7 @@ export function CategoryBreakdown({
         Number(t.amount),
         t.currency,
         currency,
+        rates,
       );
       byCategory.set(
         t.category_id,
@@ -71,7 +77,7 @@ export function CategoryBreakdown({
     }
 
     return items.sort((a, b) => b.percentage - a.percentage);
-  }, [transactions, categories, currency]);
+  }, [transactions, categories, currency, rates]);
 
   return (
     <Card className="shadow-sm">
