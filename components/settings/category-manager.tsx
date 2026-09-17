@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getCategoryIcon } from "@/lib/utils/icon-map";
 import type { Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface CategoryManagerProps {
   categories: Category[];
@@ -26,7 +36,22 @@ export function CategoryManager({
   const [newCatType, setNewCatType] = useState<"expense" | "income">("expense");
   const [loading, setLoading] = useState(false);
 
-  // Handle Add Category
+  // State untuk Modal Hapus Custom
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteName, setDeleteName] = useState<string>("");
+
+  // Bersihkan data duplikat kategori jika ada di database
+  const uniqueCategories = useMemo(() => {
+    const seen = new Set<string>();
+    return categories.filter((cat) => {
+      const key = `${cat.name.toLowerCase()}-${cat.type}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [categories]);
+
+  // Tambah Kategori
   const handleAddCategory = async () => {
     if (!newCatName.trim()) return;
     setLoading(true);
@@ -48,7 +73,7 @@ export function CategoryManager({
     setLoading(false);
   };
 
-  // Handle Save Edit
+  // Edit Kategori
   const handleSaveEdit = async (id: string) => {
     if (!editName.trim()) return;
     const supabase = createClient();
@@ -58,7 +83,7 @@ export function CategoryManager({
       .eq("id", id);
 
     if (error) {
-      toast.error("Failed to update category: " + error.message);
+      toast.error("Failed to update: " + error.message);
     } else {
       toast.success("Category updated");
       setEditingId(null);
@@ -66,22 +91,28 @@ export function CategoryManager({
     }
   };
 
-  // Handle Delete Category
-  const handleDeleteCategory = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) return;
+  // Hapus Kategori
+  const confirmDeleteCategory = async () => {
+    if (!deleteId) return;
     const supabase = createClient();
-    const { error } = await supabase.from("categories").delete().eq("id", id);
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", deleteId);
 
     if (error) {
-      toast.error("Failed to delete category: " + error.message);
+      toast.error("Failed to delete: " + error.message);
     } else {
       toast.success("Category deleted");
       onRefresh();
     }
+    setDeleteId(null);
   };
 
-  const expenseCategories = categories.filter((c) => c.type === "expense");
-  const incomeCategories = categories.filter((c) => c.type === "income");
+  const expenseCategories = uniqueCategories.filter(
+    (c) => c.type === "expense",
+  );
+  const incomeCategories = uniqueCategories.filter((c) => c.type === "income");
 
   const renderCategoryList = (items: Category[]) => (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -92,7 +123,7 @@ export function CategoryManager({
         return (
           <div
             key={cat.id}
-            className="flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm"
+            className="flex items-center justify-between rounded-lg border bg-card p-3 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700"
           >
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
@@ -117,11 +148,8 @@ export function CategoryManager({
                     size="icon"
                     variant="ghost"
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSaveEdit(cat.id);
-                    }}
-                    className="h-8 w-8 text-green-500 hover:text-green-600"
+                    onClick={() => handleSaveEdit(cat.id)}
+                    className="h-8 w-8 text-green-500 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950/30"
                   >
                     <Check className="h-4 w-4" />
                   </Button>
@@ -129,10 +157,7 @@ export function CategoryManager({
                     size="icon"
                     variant="ghost"
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingId(null);
-                    }}
+                    onClick={() => setEditingId(null)}
                     className="h-8 w-8 text-muted-foreground"
                   >
                     <X className="h-4 w-4" />
@@ -144,8 +169,7 @@ export function CategoryManager({
                     size="icon"
                     variant="ghost"
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       setEditingId(cat.id);
                       setEditName(cat.name);
                     }}
@@ -157,11 +181,11 @@ export function CategoryManager({
                     size="icon"
                     variant="ghost"
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteCategory(cat.id);
+                    onClick={() => {
+                      setDeleteId(cat.id);
+                      setDeleteName(cat.name);
                     }}
-                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -213,6 +237,33 @@ export function CategoryManager({
         </h4>
         {renderCategoryList(incomeCategories)}
       </div>
+
+      {/* Custom Modal Dialog Hapus */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400 sm:mx-0">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <AlertDialogTitle className="mt-2">
+              {`Delete "${deleteName}" category?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Any transactions associated with
+              this category will remain, but the category tag will be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCategory}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, Delete Category
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
